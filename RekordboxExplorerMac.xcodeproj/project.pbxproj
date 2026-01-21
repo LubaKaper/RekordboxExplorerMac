@@ -6,14 +6,41 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		8D3C33D92F207A5500DAE047 /* BookmarkStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D3C33D82F207A5500DAE047 /* BookmarkStore.swift */; };
+		8D3C33DA2F207A5500DAE047 /* BookmarkStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D3C33D82F207A5500DAE047 /* BookmarkStore.swift */; };
+		8D3C33DD2F20862700DAE047 /* PDFExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D3C33DC2F20862700DAE047 /* PDFExportService.swift */; };
+		8D3C33DE2F20862700DAE047 /* PDFExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D3C33DC2F20862700DAE047 /* PDFExportService.swift */; };
+		8DE278762F1C828300086117 /* Track.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DE278752F1C828300086117 /* Track.swift */; };
+		8DE278782F1C86EA00086117 /* Playlist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DE278772F1C86EA00086117 /* Playlist.swift */; };
+		8DE2787A2F1C871C00086117 /* RekordboxDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DE278792F1C871C00086117 /* RekordboxDatabase.swift */; };
+		8DE278822F1C886300086117 /* PDBParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DE278812F1C886300086117 /* PDBParser.swift */; };
+		8DE278982F20144200086117 /* PDBParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DE278812F1C886300086117 /* PDBParser.swift */; };
+		8DE2789A2F20145100086117 /* Track.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DE278752F1C828300086117 /* Track.swift */; };
+		8DE2789B2F20146200086117 /* Playlist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DE278772F1C86EA00086117 /* Playlist.swift */; };
+		8DE2789C2F20146D00086117 /* RekordboxDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DE278792F1C871C00086117 /* RekordboxDatabase.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		8D3C33D82F207A5500DAE047 /* BookmarkStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkStore.swift; sourceTree = "<group>"; };
+		8D3C33DC2F20862700DAE047 /* PDFExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFExportService.swift; sourceTree = "<group>"; };
 		8DE278642F1C7FB400086117 /* RekordboxExplorerMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RekordboxExplorerMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8DE278752F1C828300086117 /* Track.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Track.swift; sourceTree = "<group>"; };
+		8DE278772F1C86EA00086117 /* Playlist.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Playlist.swift; sourceTree = "<group>"; };
+		8DE278792F1C871C00086117 /* RekordboxDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RekordboxDatabase.swift; sourceTree = "<group>"; };
+		8DE278812F1C886300086117 /* PDBParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDBParser.swift; sourceTree = "<group>"; };
+		8DE2788D2F2013E300086117 /* RekordboxExploreriOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RekordboxExploreriOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		8DE278662F1C7FB400086117 /* RekordboxExplorerMac */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = RekordboxExplorerMac;
+			sourceTree = "<group>";
+		};
+		8DE2788E2F2013E300086117 /* RekordboxExploreriOS */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RekordboxExploreriOS;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -26,13 +53,30 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8DE2788A2F2013E300086117 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8D3C33DB2F2085F400DAE047 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				8D3C33DC2F20862700DAE047 /* PDFExportService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
 		8DE2785B2F1C7FB400086117 = {
 			isa = PBXGroup;
 			children = (
+				8DE2789D2F20192300086117 /* Shared */,
 				8DE278662F1C7FB400086117 /* RekordboxExplorerMac */,
+				8DE2788E2F2013E300086117 /* RekordboxExploreriOS */,
 				8DE278652F1C7FB400086117 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,8 +85,38 @@
 			isa = PBXGroup;
 			children = (
 				8DE278642F1C7FB400086117 /* RekordboxExplorerMac.app */,
+				8DE2788D2F2013E300086117 /* RekordboxExploreriOS.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		8DE2789D2F20192300086117 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				8D3C33DB2F2085F400DAE047 /* Services */,
+				8DE2789F2F20196E00086117 /* Models */,
+				8DE2789E2F20196200086117 /* Core */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		8DE2789E2F20196200086117 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				8DE278812F1C886300086117 /* PDBParser.swift */,
+				8D3C33D82F207A5500DAE047 /* BookmarkStore.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		8DE2789F2F20196E00086117 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				8DE278752F1C828300086117 /* Track.swift */,
+				8DE278792F1C871C00086117 /* RekordboxDatabase.swift */,
+				8DE278772F1C86EA00086117 /* Playlist.swift */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -70,6 +144,28 @@
 			productReference = 8DE278642F1C7FB400086117 /* RekordboxExplorerMac.app */;
 			productType = "com.apple.product-type.application";
 		};
+		8DE2788C2F2013E300086117 /* RekordboxExploreriOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8DE278952F2013E500086117 /* Build configuration list for PBXNativeTarget "RekordboxExploreriOS" */;
+			buildPhases = (
+				8DE278892F2013E300086117 /* Sources */,
+				8DE2788A2F2013E300086117 /* Frameworks */,
+				8DE2788B2F2013E300086117 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				8DE2788E2F2013E300086117 /* RekordboxExploreriOS */,
+			);
+			name = RekordboxExploreriOS;
+			packageProductDependencies = (
+			);
+			productName = RekordboxExploreriOS;
+			productReference = 8DE2788D2F2013E300086117 /* RekordboxExploreriOS.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -81,6 +177,9 @@
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					8DE278632F1C7FB400086117 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					8DE2788C2F2013E300086117 = {
 						CreatedOnToolsVersion = 26.2;
 					};
 				};
@@ -100,12 +199,20 @@
 			projectRoot = "";
 			targets = (
 				8DE278632F1C7FB400086117 /* RekordboxExplorerMac */,
+				8DE2788C2F2013E300086117 /* RekordboxExploreriOS */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		8DE278622F1C7FB400086117 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8DE2788B2F2013E300086117 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -119,6 +226,25 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8DE2787A2F1C871C00086117 /* RekordboxDatabase.swift in Sources */,
+				8D3C33DE2F20862700DAE047 /* PDFExportService.swift in Sources */,
+				8D3C33D92F207A5500DAE047 /* BookmarkStore.swift in Sources */,
+				8DE278822F1C886300086117 /* PDBParser.swift in Sources */,
+				8DE278762F1C828300086117 /* Track.swift in Sources */,
+				8DE278782F1C86EA00086117 /* Playlist.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8DE278892F2013E300086117 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8DE278982F20144200086117 /* PDBParser.swift in Sources */,
+				8DE2789A2F20145100086117 /* Track.swift in Sources */,
+				8D3C33DA2F207A5500DAE047 /* BookmarkStore.swift in Sources */,
+				8DE2789B2F20146200086117 /* Playlist.swift in Sources */,
+				8DE2789C2F20146D00086117 /* RekordboxDatabase.swift in Sources */,
+				8D3C33DD2F20862700DAE047 /* PDFExportService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -177,6 +303,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.6;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -234,6 +361,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.6;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -323,6 +451,75 @@
 			};
 			name = Release;
 		};
+		8DE278962F2013E500086117 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CNV924Q9C2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lubakaper.RekordboxExploreriOS;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		8DE278972F2013E500086117 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CNV924Q9C2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lubakaper.RekordboxExploreriOS;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -340,6 +537,15 @@
 			buildConfigurations = (
 				8DE278702F1C7FB500086117 /* Debug */,
 				8DE278712F1C7FB500086117 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8DE278952F2013E500086117 /* Build configuration list for PBXNativeTarget "RekordboxExploreriOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8DE278962F2013E500086117 /* Debug */,
+				8DE278972F2013E500086117 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
