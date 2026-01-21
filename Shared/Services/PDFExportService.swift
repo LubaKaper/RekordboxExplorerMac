@@ -112,6 +112,213 @@ struct PDFExportService {
         try data.write(to: url, options: .atomic)
         return url
     }
+    
+    static func exportSectionedTracksPDF(
+        title: String,
+        subtitle: String? = nil,
+        sections: [(name: String, tracks: [Track])]
+    ) throws -> URL {
+
+        let data = try makeSectionedTracksPDF(title: title, subtitle: subtitle, sections: sections)
+
+        let filename = safeFileName(title.isEmpty ? "rekordbox-library" : title)
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("\(filename).pdf")
+
+        try data.write(to: url, options: .atomic)
+        return url
+    }
+    
+    static func makeSectionedTracksPDF(
+        title: String,
+        subtitle: String? = nil,
+        sections: [(name: String, tracks: [Track])]
+    ) throws -> Data {
+
+        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
+
+        #if os(iOS)
+        let renderer = UIGraphicsPDFRenderer(bounds: pageRect)
+        return renderer.pdfData { ctx in
+            renderSectionedPDF(
+                pageRect: pageRect,
+                beginPage: { ctx.beginPage() },
+                drawText: { text, rect, style in
+                    (text as NSString).draw(in: rect, withAttributes: style.uiAttributes)
+                },
+                title: title,
+                subtitle: subtitle,
+                sections: sections
+            )
+        }
+        #elseif os(macOS)
+        let data = NSMutableData()
+
+        guard let consumer = CGDataConsumer(data: data as CFMutableData),
+              let pdf = CGContext(consumer: consumer, mediaBox: nil, nil) else {
+            throw PDFExportError.failedToCreateContext
+        }
+
+        renderSectionedPDF(
+            pageRect: pageRect,
+            beginPage: { pdf.beginPDFPage([kCGPDFContextMediaBox as String: pageRect] as CFDictionary) },
+            drawText: { text, rect, style in
+                let gc = NSGraphicsContext(cgContext: pdf, flipped: true) // keep TRUE
+                NSGraphicsContext.saveGraphicsState()
+                NSGraphicsContext.current = gc
+                (text as NSString).draw(in: rect, withAttributes: style.nsAttributes)
+                NSGraphicsContext.restoreGraphicsState()
+            },
+            endPage: { pdf.endPDFPage() },
+            endDocument: { pdf.closePDF() },
+            title: title,
+            subtitle: subtitle,
+            sections: sections
+        )
+
+        return data as Data
+        #endif
+    }
+    
+    private static func renderSectionedPDF(
+        pageRect: CGRect,
+        beginPage: () -> Void,
+        drawText: (String, CGRect, TextStyle) -> Void,
+        endPage: (() -> Void)? = nil,
+        endDocument: (() -> Void)? = nil,
+        title: String,
+        subtitle: String?,
+        sections: [(name: String, tracks: [Track])]
+    ) {
+        let margin: CGFloat = 36
+        let headerHeight: CGFloat = 72
+        let sectionHeaderHeight: CGFloat = 20
+        let rowHeight: CGFloat = 16
+        let colGap: CGFloat = 8
+
+        let usableWidth = pageRect.width - margin * 2
+        let titleW: CGFloat = usableWidth * 0.30
+        let artistW: CGFloat = usableWidth * 0.20
+        let albumW: CGFloat = usableWidth * 0.30
+        let bpmW: CGFloat = usableWidth * 0.10
+        let durW: CGFloat = usableWidth * 0.10
+
+        func colX(_ idx: Int) -> CGFloat {
+            var x = margin
+            if idx > 0 { x += titleW + colGap }
+            if idx > 1 { x += artistW + colGap }
+            if idx > 2 { x += albumW + colGap }
+            if idx > 3 { x += bpmW + colGap }
+            return x
+        }
+
+        func formatDuration(_ seconds: Int) -> String {
+            let m = seconds / 60
+            let s = seconds % 60
+            return String(format: "%d:%02d", m, s)
+        }
+
+        enum Item {
+            case section(String, Int) // name, count
+            case track(Track)
+        }
+
+        var items: [Item] = []
+        for s in sections {
+            items.append(.section(s.name, s.tracks.count))
+            for t in s.tracks { items.append(.track(t)) }
+        }
+
+        let tableTop = margin + headerHeight
+        let startY = tableTop + 18
+        let availableHeight = pageRect.height - margin - startY
+        let maxRowsPerPage = Int(availableHeight / rowHeight)
+
+        var page = 1
+        var i = 0
+
+        func drawPageHeader() {
+            drawText(title, CGRect(x: margin, y: margin, width: usableWidth, height: 28),
+                     TextStyle(fontSize: 18, isBold: true, isSecondary: false))
+
+            var headerY = margin + 26
+            if let subtitle, !subtitle.isEmpty {
+                drawText(subtitle, CGRect(x: margin, y: headerY, width: usableWidth, height: 18),
+                         TextStyle(fontSize: 12, isBold: false, isSecondary: true))
+                headerY += 18
+            }
+
+            drawText("Page \(page)", CGRect(x: margin, y: headerY, width: usableWidth, height: 18),
+                     TextStyle(fontSize: 10, isBold: false, isSecondary: true))
+
+            // Column header
+            drawText("Title",  CGRect(x: colX(0), y: tableTop, width: titleW, height: 16), TextStyle(fontSize: 11, isBold: true, isSecondary: false))
+            drawText("Artist", CGRect(x: colX(1), y: tableTop, width: artistW, height: 16), TextStyle(fontSize: 11, isBold: true, isSecondary: false))
+            drawText("Album",  CGRect(x: colX(2), y: tableTop, width: albumW, height: 16), TextStyle(fontSize: 11, isBold: true, isSecondary: false))
+            drawText("BPM",    CGRect(x: colX(3), y: tableTop, width: bpmW, height: 16), TextStyle(fontSize: 11, isBold: true, isSecondary: false))
+            drawText("Dur",    CGRect(x: colX(4), y: tableTop, width: durW, height: 16), TextStyle(fontSize: 11, isBold: true, isSecondary: false))
+        }
+
+        while i < items.count {
+            beginPage()
+            drawPageHeader()
+
+            var row = 0
+            while row < maxRowsPerPage && i < items.count {
+                let y = startY + CGFloat(row) * rowHeight
+
+                switch items[i] {
+                case .section(let name, let count):
+                    // If section header would be last visible line, push to next page
+                    if row >= maxRowsPerPage - 1 {
+                        break
+                    }
+                    let text = "\(name)  —  \(count) tracks"
+                    drawText(text,
+                             CGRect(x: margin, y: y, width: usableWidth, height: sectionHeaderHeight),
+                             TextStyle(fontSize: 11, isBold: true, isSecondary: false))
+                    row += 1
+                    i += 1
+
+                case .track(let t):
+                    drawText(t.title,
+                             CGRect(x: colX(0), y: y, width: titleW, height: rowHeight),
+                             TextStyle(fontSize: 10, isBold: false, isSecondary: false))
+
+                    drawText(t.artist,
+                             CGRect(x: colX(1), y: y, width: artistW, height: rowHeight),
+                             TextStyle(fontSize: 10, isBold: false, isSecondary: true))
+
+                    drawText(t.album.isEmpty ? "—" : t.album,
+                             CGRect(x: colX(2), y: y, width: albumW, height: rowHeight),
+                             TextStyle(fontSize: 10, isBold: false, isSecondary: true))
+
+                    drawText(String(format: "%.1f", t.bpm),
+                             CGRect(x: colX(3), y: y, width: bpmW, height: rowHeight),
+                             TextStyle(fontSize: 10, isBold: false, isSecondary: true))
+
+                    drawText(formatDuration(t.duration),
+                             CGRect(x: colX(4), y: y, width: durW, height: rowHeight),
+                             TextStyle(fontSize: 10, isBold: false, isSecondary: true))
+
+                    row += 1
+                    i += 1
+                }
+            }
+
+            endPage?()
+            page += 1
+        }
+
+        // If there were no sections at all, still output a single page
+        if items.isEmpty {
+            beginPage()
+            drawPageHeader()
+            endPage?()
+        }
+
+        endDocument?()
+    }
 
     private static func safeFileName(_ s: String) -> String {
         let bad = CharacterSet(charactersIn: "/\\?%*|\"<>:")
