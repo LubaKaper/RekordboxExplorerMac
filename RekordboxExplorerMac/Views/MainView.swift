@@ -5,7 +5,9 @@
 //  Created by Liubov Kaper  on 1/17/26.
 //
 
+import AppKit
 import SwiftUI
+internal import UniformTypeIdentifiers
 
 enum LibrarySelection: Hashable {
     case home
@@ -69,6 +71,9 @@ struct MainView: View {
                     }
                     Button("Export JSON…") {
                         ExportService.exportTracks(visibleTracks(), format: .json)
+                    }
+                    Button("Export PDF…") {
+                        exportTracksPDF(title: "Rekordbox Library", tracks: visibleTracks())
                     }
                 }
                 .disabled(db == nil)
@@ -326,6 +331,28 @@ struct MainView: View {
         
         // sort according to Table sortOrder
         return filtered.sorted(using: sortOrder)
+    }
+    
+    private func exportTracksPDF(title: String, tracks: [Track]) {
+        do {
+            let pdfURL = try PDFExportService.exportTracksPDF(
+                title: title,
+                subtitle: "\(tracks.count) tracks",
+                tracks: tracks
+            )
+
+            let panel = NSSavePanel()
+            panel.allowedContentTypes = [.pdf]
+            panel.nameFieldStringValue = "\(title).pdf"
+            panel.canCreateDirectories = true
+
+            if panel.runModal() == .OK, let dest = panel.url {
+                try? FileManager.default.removeItem(at: dest)
+                try FileManager.default.copyItem(at: pdfURL, to: dest)
+            }
+        } catch {
+            print("PDF export failed:", error)
+        }
     }
     
     private func playlistName(_ id: Int) -> String? {
