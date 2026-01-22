@@ -18,6 +18,14 @@ enum PDFExportError: Error {
     case failedToCreateContext
 }
 
+struct PDFTrackRow: Sendable {
+    let title: String
+    let artist: String
+    let album: String
+    let bpm: Double
+    let duration: Int
+}
+
 struct PDFExportService {
 
     /// Builds a simple paginated PDF table of tracks.
@@ -114,9 +122,9 @@ struct PDFExportService {
     }
     
     static func exportSectionedTracksPDF(
-        title: String,
-        subtitle: String? = nil,
-        sections: [(name: String, tracks: [Track])]
+      title: String,
+      subtitle: String?,
+      sections: [(name: String, tracks: [PDFTrackRow])]
     ) throws -> URL {
 
         let data = try makeSectionedTracksPDF(title: title, subtitle: subtitle, sections: sections)
@@ -132,7 +140,7 @@ struct PDFExportService {
     static func makeSectionedTracksPDF(
         title: String,
         subtitle: String? = nil,
-        sections: [(name: String, tracks: [Track])]
+        sections: [(name: String, tracks: [PDFTrackRow])]
     ) throws -> Data {
 
         let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
@@ -188,7 +196,7 @@ struct PDFExportService {
         endDocument: (() -> Void)? = nil,
         title: String,
         subtitle: String?,
-        sections: [(name: String, tracks: [Track])]
+        sections: [(name: String, tracks: [PDFTrackRow])]
     ) {
         let margin: CGFloat = 36
         let headerHeight: CGFloat = 72
@@ -220,7 +228,7 @@ struct PDFExportService {
 
         enum Item {
             case section(String, Int) // name, count
-            case track(Track)
+            case track(PDFTrackRow)
         }
 
         var items: [Item] = []

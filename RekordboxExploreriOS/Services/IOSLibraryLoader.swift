@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-@MainActor
+//@MainActor
 final class IOSLibraryLoader: ObservableObject {
     @Published var status: String = ""
     @Published var db: RekordboxDatabase?
@@ -27,21 +27,23 @@ final class IOSLibraryLoader: ObservableObject {
     func load(exportPdbURL: URL) {
         status = "Loading…"
 
-        Task(priority: .userInitiated) { [weak self] in
+        let parser = self.parser  // capture locally so detached can use it
+
+        Task.detached(priority: .userInitiated) { [weak self] in
             guard let self else { return }
 
             let ok = exportPdbURL.startAccessingSecurityScopedResource()
             defer { if ok { exportPdbURL.stopAccessingSecurityScopedResource() } }
 
             do {
-                let db = try self.parser.parseExportPDB(exportPdbURL)
+                let db = try parser.parseExportPDB(exportPdbURL)
                 await MainActor.run {
                     self.db = db
                     self.status = "Loaded."
                 }
             } catch {
                 await MainActor.run {
-                    self.status = "Parse failed (USB unplugged? pick again): \(error.localizedDescription)"
+                    self.status = "Parse failed: \(error.localizedDescription)"
                 }
             }
         }

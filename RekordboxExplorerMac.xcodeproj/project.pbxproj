@@ -11,6 +11,8 @@
 		8D3C33DA2F207A5500DAE047 /* BookmarkStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D3C33D82F207A5500DAE047 /* BookmarkStore.swift */; };
 		8D3C33DD2F20862700DAE047 /* PDFExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D3C33DC2F20862700DAE047 /* PDFExportService.swift */; };
 		8D3C33DE2F20862700DAE047 /* PDFExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D3C33DC2F20862700DAE047 /* PDFExportService.swift */; };
+		8D3C33E52F216E9700DAE047 /* SectionBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D3C33E42F216E9700DAE047 /* SectionBuilder.swift */; };
+		8D3C33E62F216E9700DAE047 /* SectionBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D3C33E42F216E9700DAE047 /* SectionBuilder.swift */; };
 		8DE278762F1C828300086117 /* Track.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DE278752F1C828300086117 /* Track.swift */; };
 		8DE278782F1C86EA00086117 /* Playlist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DE278772F1C86EA00086117 /* Playlist.swift */; };
 		8DE2787A2F1C871C00086117 /* RekordboxDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DE278792F1C871C00086117 /* RekordboxDatabase.swift */; };
@@ -24,6 +26,7 @@
 /* Begin PBXFileReference section */
 		8D3C33D82F207A5500DAE047 /* BookmarkStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkStore.swift; sourceTree = "<group>"; };
 		8D3C33DC2F20862700DAE047 /* PDFExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFExportService.swift; sourceTree = "<group>"; };
+		8D3C33E42F216E9700DAE047 /* SectionBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionBuilder.swift; sourceTree = "<group>"; };
 		8DE278642F1C7FB400086117 /* RekordboxExplorerMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RekordboxExplorerMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8DE278752F1C828300086117 /* Track.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Track.swift; sourceTree = "<group>"; };
 		8DE278772F1C86EA00086117 /* Playlist.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Playlist.swift; sourceTree = "<group>"; };
@@ -67,6 +70,7 @@
 			isa = PBXGroup;
 			children = (
 				8D3C33DC2F20862700DAE047 /* PDFExportService.swift */,
+				8D3C33E42F216E9700DAE047 /* SectionBuilder.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -229,6 +233,7 @@
 				8DE2787A2F1C871C00086117 /* RekordboxDatabase.swift in Sources */,
 				8D3C33DE2F20862700DAE047 /* PDFExportService.swift in Sources */,
 				8D3C33D92F207A5500DAE047 /* BookmarkStore.swift in Sources */,
+				8D3C33E52F216E9700DAE047 /* SectionBuilder.swift in Sources */,
 				8DE278822F1C886300086117 /* PDBParser.swift in Sources */,
 				8DE278762F1C828300086117 /* Track.swift in Sources */,
 				8DE278782F1C86EA00086117 /* Playlist.swift in Sources */,
@@ -240,6 +245,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8DE278982F20144200086117 /* PDBParser.swift in Sources */,
+				8D3C33E62F216E9700DAE047 /* SectionBuilder.swift in Sources */,
 				8DE2789A2F20145100086117 /* Track.swift in Sources */,
 				8D3C33DA2F207A5500DAE047 /* BookmarkStore.swift in Sources */,
 				8DE2789B2F20146200086117 /* Playlist.swift in Sources */,
@@ -404,7 +410,7 @@
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -444,7 +450,7 @@
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -477,7 +483,7 @@
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -511,7 +517,7 @@
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
