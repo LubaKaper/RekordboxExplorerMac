@@ -13,6 +13,7 @@ struct AllTracksView: View {
     @State private var searchText = ""
     @State private var shareItem: ShareItem?
     @State private var exportErrorMessage: String?
+    @State private var previewItem: PreviewItem?
 
     var body: some View {
         let visibleTracks = filtered(tracks)
@@ -51,6 +52,14 @@ struct AllTracksView: View {
                 .disabled(visibleTracks.isEmpty)
             }
         }
+        .sheet(item: $previewItem) { item in
+            PreviewSheet(
+                url: item.url,
+                onShare: { url in
+                    shareItem = ShareItem(url: url)
+                }
+            )
+        }
         .sheet(item: $shareItem) { item in
             ShareSheet(items: [item.url])
         }
@@ -78,7 +87,7 @@ struct AllTracksView: View {
                 subtitle: "\(tracks.count) tracks",
                 tracks: tracks
             )
-            shareItem = ShareItem(url: url)
+            previewItem = PreviewItem(url: url)
         } catch {
             exportErrorMessage = error.localizedDescription
         }
@@ -88,4 +97,38 @@ struct AllTracksView: View {
 private struct ShareItem: Identifiable {
     let id = UUID()
     let url: URL
+}
+
+private struct PreviewItem: Identifiable {
+    let id = UUID()
+    let url: URL
+}
+
+private struct PreviewSheet: View {
+    let url: URL
+    let onShare: (URL) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            PDFPreviewController(url: url)
+                .ignoresSafeArea()
+                .navigationTitle("PDF Preview")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            // 1) Close preview sheet
+                            dismiss()
+                            // 2) Present share sheet AFTER dismissal
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                                onShare(url)
+                            }
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                    }
+                }
+        }
+    }
 }

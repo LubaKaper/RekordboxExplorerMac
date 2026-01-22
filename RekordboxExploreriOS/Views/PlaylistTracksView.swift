@@ -12,6 +12,7 @@ struct PlaylistTracksView: View {
     let db: RekordboxDatabase
 
     @State private var searchText = ""
+    @State private var previewItem: PreviewItem?
     @State private var shareItem: ShareItem?
     @State private var exportErrorMessage: String?
 
@@ -48,11 +49,18 @@ struct PlaylistTracksView: View {
                 Button {
                     exportPDF(tracks: visibleTracks)
                 } label: {
-                    Image(systemName: "square.and.arrow.up")
+                    Image(systemName: "doc.fill")
                 }
                 .disabled(visibleTracks.isEmpty)
             }
         }
+        // Preview first
+        .sheet(item: $previewItem) { item in
+            PreviewSheet(url: item.url) { url in
+                shareItem = ShareItem(url: url)
+            }
+        }
+        // Then Share
         .sheet(item: $shareItem) { item in
             ShareSheet(items: [item.url])
         }
@@ -89,14 +97,50 @@ struct PlaylistTracksView: View {
                 subtitle: "\(tracks.count) tracks",
                 tracks: tracks
             )
-            shareItem = ShareItem(url: url)
+            previewItem = PreviewItem(url: url)   // ✅ preview first
         } catch {
             exportErrorMessage = error.localizedDescription
         }
     }
 }
 
+// MARK: - Sheet Items
+
+private struct PreviewItem: Identifiable {
+    let id = UUID()
+    let url: URL
+}
+
 private struct ShareItem: Identifiable {
     let id = UUID()
     let url: URL
+}
+
+// MARK: - Preview sheet wrapper (dismiss preview, then share)
+
+private struct PreviewSheet: View {
+    let url: URL
+    let onShare: (URL) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            PDFPreviewController(url: url)
+                .ignoresSafeArea()
+                .navigationTitle("PDF Preview")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            dismiss()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                                onShare(url)
+                            }
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                    }
+                }
+        }
+    }
 }

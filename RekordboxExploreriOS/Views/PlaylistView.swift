@@ -10,12 +10,13 @@ import SwiftUI
 struct PlaylistView: View {
     let playlist: Playlist
     let db: RekordboxDatabase
-    
+
+    @State private var previewItem: PreviewItem?
     @State private var shareItem: ShareItem?
     @State private var exportErrorMessage: String?
     @State private var isExportingPDF = false
     @State private var exportStatus: String = ""
-    
+
     var body: some View {
         Group {
             if playlist.isFolder {
@@ -45,12 +46,19 @@ struct PlaylistView: View {
                             if isExportingPDF {
                                 ProgressView()
                             } else {
-                                Image(systemName: "square.and.arrow.up")
+                                Image(systemName: "doc.fill")
                             }
                         }
                         .disabled(isExportingPDF || totalTrackCount(for: playlist) == 0)
                     }
                 }
+                // Preview first
+                .sheet(item: $previewItem) { item in
+                    PreviewSheet(url: item.url) { url in
+                        shareItem = ShareItem(url: url)
+                    }
+                }
+                // Then Share
                 .sheet(item: $shareItem) { item in
                     ShareSheet(items: [item.url])
                 }
@@ -63,23 +71,20 @@ struct PlaylistView: View {
                             .padding(.top, 4)
                     }
                 }
-                .sheet(item: $shareItem) { item in
-                    ShareSheet(items: [item.url])
-                }
                 .alert("Export failed", isPresented: .constant(exportErrorMessage != nil)) {
                     Button("OK") { exportErrorMessage = nil }
                 } message: {
                     Text(exportErrorMessage ?? "")
                 }
-                
+
             } else {
                 PlaylistTracksView(playlist: playlist, db: db)
             }
         }
     }
-    
-    // MARK: - Folder PDF Export Helpers (iOS)
-    
+
+    // MARK: - Folder helpers
+
     private func totalTrackCount(for playlist: Playlist) -> Int {
         if playlist.isFolder {
             return playlist.children.reduce(0) { $0 + totalTrackCount(for: $1) }
@@ -87,30 +92,31 @@ struct PlaylistView: View {
             return playlist.trackIds.count
         }
     }
-    
-    /// Folder export: sections for every descendant playlist/folder with headings.
+
+    /// Folder export: sections for every descendant playlist with headings.
     private func exportFolderPDF() {
         guard playlist.isFolder else { return }
         guard !isExportingPDF else { return }
-        
+
         isExportingPDF = true
         exportErrorMessage = nil
-        
+        exportStatus = "Preparing PDF…"
+
         Task {
             do {
-                // 1) Build + map to Sendable OFF main thread
+                // 1) Build + map Sendable OFF main thread
                 let (pdfTitle, pdfSubtitle, sendableSections) =
                 await Task.detached(priority: .userInitiated) { () -> (String, String, [(name: String, tracks: [PDFTrackRow])]) in
-                    
+
                     let sections = SectionBuilder.buildSectionsUnderFolder(playlist, db: db)
                     let total = sections.reduce(0) { $0 + $1.tracks.count }
-                    
+
                     let title = playlist.name
                     let subtitle = "\(total) tracks"
-                    
+
                     let mapped: [(name: String, tracks: [PDFTrackRow])] = sections.map { s in
                         (
-                            name: s.title, // <-- keep s.title if that's your TrackSection field
+                            name: s.title,
                             tracks: s.tracks.map { t in
                                 PDFTrackRow(
                                     title: t.title,
@@ -122,11 +128,13 @@ struct PlaylistView: View {
                             }
                         )
                     }
-                    
+
                     return (title, subtitle, mapped)
                 }.value
-                
-                // 2) EXPORT PDF on MainActor (UIKit PDF renderer => MainActor)
+
+                await MainActor.run { exportStatus = "Rendering PDF…" }
+
+                // 2) Export PDF on MainActor (UIKit renderer)
                 let url = try await MainActor.run {
                     try PDFExportService.exportSectionedTracksPDF(
                         title: pdfTitle,
@@ -134,22 +142,30 @@ struct PlaylistView: View {
                         sections: sendableSections
                     )
                 }
-                
-                // 3) Update UI on main thread
+
+                // 3) Show PREVIEW (not share)
                 await MainActor.run {
-                    shareItem = ShareItem(url: url)
+                    previewItem = PreviewItem(url: url)
                     isExportingPDF = false
+                    exportStatus = ""
                 }
-                
+
             } catch {
                 await MainActor.run {
                     exportErrorMessage = error.localizedDescription
                     isExportingPDF = false
+                    exportStatus = ""
                 }
-                print("PDF export failed:", error)
             }
         }
     }
+}
+
+// MARK: - Sheet items
+
+private struct PreviewItem: Identifiable {
+    let id = UUID()
+    let url: URL
 }
 
 private struct ShareItem: Identifiable {
@@ -157,4 +173,32 @@ private struct ShareItem: Identifiable {
     let url: URL
 }
 
+// MARK: - Preview wrapper (dismiss preview, then share)
+
+private struct PreviewSheet: View {
+    let url: URL
+    let onShare: (URL) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            PDFPreviewController(url: url)
+                .ignoresSafeArea()
+                .navigationTitle("PDF Preview")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            dismiss()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                                onShare(url)
+                            }
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                    }
+                }
+        }
+    }
+}
 
