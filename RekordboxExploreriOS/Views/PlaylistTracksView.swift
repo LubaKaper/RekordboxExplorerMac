@@ -12,135 +12,225 @@ struct PlaylistTracksView: View {
     let db: RekordboxDatabase
 
     @State private var searchText = ""
-    @State private var previewItem: PreviewItem?
-    @State private var shareItem: ShareItem?
+    @State private var pdfURL: URL?
+    @State private var showPreview = false
+    @State private var showShare = false
     @State private var exportErrorMessage: String?
+    @State private var isExporting = false
+    @State private var showCopiedToast = false
 
-    var body: some View {
-        let tracksForPlaylist = playlistTracksInOrder()
-        let visibleTracks = filtered(tracksForPlaylist)
+    @AppStorage("fontSizeMultiplier") private var fontSizeMultiplier: Double = 1.0
 
-        List {
-            Section {
-                ForEach(visibleTracks) { t in
-                    NavigationLink {
-                        TrackDetailView(track: t)
-                    } label: {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(t.title).lineLimit(1)
-                            Text("\(t.artist) • \(t.album.isEmpty ? "—" : t.album)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                        }
-                        .padding(.vertical, 6)
-                    }
-                }
-            } header: {
-                TextField("Search title / artist / album…", text: $searchText)
-                    .textFieldStyle(.roundedBorder)
-                    .padding(.vertical, 8)
-            }
-        }
-        .listStyle(.plain)
-        .navigationTitle(playlist.name)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    exportPDF(tracks: visibleTracks)
-                } label: {
-                    Image(systemName: "doc.fill")
-                }
-                .disabled(visibleTracks.isEmpty)
-            }
-        }
-        // Preview first
-        .sheet(item: $previewItem) { item in
-            PreviewSheet(url: item.url) { url in
-                shareItem = ShareItem(url: url)
-            }
-        }
-        // Then Share
-        .sheet(item: $shareItem) { item in
-            ShareSheet(items: [item.url])
-        }
-        .alert("Export failed", isPresented: .constant(exportErrorMessage != nil)) {
-            Button("OK") { exportErrorMessage = nil }
-        } message: {
-            Text(exportErrorMessage ?? "")
-        }
-    }
+    // MARK: - Computed Properties
 
-    /// Returns tracks in the playlist's stored order (trackIds order).
-    private func playlistTracksInOrder() -> [Track] {
-        // Fast lookup: trackId -> Track
+    /// Returns tracks in the playlist's stored order
+    private var playlistTracks: [Track] {
         let map: [Int: Track] = Dictionary(uniqueKeysWithValues: db.tracks.map { ($0.id, $0) })
-
-        // Preserve playlist order (and skip missing IDs)
         return playlist.trackIds.compactMap { map[$0] }
     }
 
-    private func filtered(_ tracks: [Track]) -> [Track] {
-        let q = searchText.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !q.isEmpty else { return tracks }
-        return tracks.filter {
-            $0.title.lowercased().contains(q) ||
-            $0.artist.lowercased().contains(q) ||
-            $0.album.lowercased().contains(q)
-        }
+    /// Filtered tracks based on search query
+    private var visibleTracks: [Track] {
+        TrackFilterHelpers.filtered(playlistTracks, searchText: searchText)
     }
 
-    private func exportPDF(tracks: [Track]) {
-        do {
-            let url = try PDFExportService.exportTracksPDF(
-                title: playlist.name,
-                subtitle: "\(tracks.count) tracks",
-                tracks: tracks
-            )
-            previewItem = PreviewItem(url: url)   // ✅ preview first
-        } catch {
-            exportErrorMessage = error.localizedDescription
-        }
+    /// Binding for error alert
+    private var showErrorAlert: Binding<Bool> {
+        Binding(
+            get: { exportErrorMessage != nil },
+            set: { if !$0 { exportErrorMessage = nil } }
+        )
     }
-}
 
-// MARK: - Sheet Items
-
-private struct PreviewItem: Identifiable {
-    let id = UUID()
-    let url: URL
-}
-
-private struct ShareItem: Identifiable {
-    let id = UUID()
-    let url: URL
-}
-
-// MARK: - Preview sheet wrapper (dismiss preview, then share)
-
-private struct PreviewSheet: View {
-    let url: URL
-    let onShare: (URL) -> Void
-    @Environment(\.dismiss) private var dismiss
+    // MARK: - Body
 
     var body: some View {
-        NavigationStack {
-            PDFPreviewController(url: url)
-                .ignoresSafeArea()
-                .navigationTitle("PDF Preview")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            dismiss()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                                onShare(url)
-                            }
+        VStack(spacing: 0) {
+            // Search bar outside the list (stable position)
+            searchBar
+
+            // List of tracks
+            List {
+                // Show empty state as a row, not replacing the whole view
+                if visibleTracks.isEmpty && !searchText.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 48))
+                            .foregroundStyle(.secondary)
+                        Text("No Results")
+                            .font(.title3)
+                            .fontWeight(.medium)
+                        Text("Try a different search term")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 60)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                } else {
+                    ForEach(visibleTracks) { track in
+                        NavigationLink {
+                            TrackDetailView(track: track)
                         } label: {
-                            Image(systemName: "square.and.arrow.up")
+                            TrackRowView(track: track)
+                        }
+                        .swipeActions(edge: .trailing) {
+                            Button {
+                                copyTrackInfo(track)
+                            } label: {
+                                Label("Copy", systemImage: "doc.on.doc")
+                            }
+                            .tint(.blue)
                         }
                     }
                 }
+            }
+            .listStyle(.plain)
         }
+        .navigationTitle(playlist.name)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                exportButton
+            }
+        }
+        .sheet(isPresented: $showPreview) {
+            if let url = pdfURL {
+                PDFPreviewSheet(url: url) { sharedURL in
+                    showPreview = false
+                    pdfURL = sharedURL
+                    showShare = true
+                }
+            }
+        }
+        .sheet(isPresented: $showShare) {
+            if let url = pdfURL {
+                ShareSheet(items: [url])
+            }
+        }
+        .alert("Export Failed", isPresented: showErrorAlert) {
+            Button("Retry", role: .none) {
+                exportPDF(tracks: visibleTracks)
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text(exportErrorMessage ?? "An unknown error occurred")
+        }
+        .overlay {
+            if isExporting {
+                ProgressView("Generating PDF...")
+                    .padding()
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+        }
+        .toast("Copied", isShowing: $showCopiedToast)
+    }
+
+    // MARK: - View Components
+
+    private var searchBar: some View {
+        HStack(spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                    .font(.body)
+
+                TextField("Search title / artist / album...", text: $searchText)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(Color(.systemGray6))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(Color(.systemBackground))
+    }
+
+    private var exportButton: some View {
+        Button {
+            exportPDF(tracks: visibleTracks)
+        } label: {
+            if isExporting {
+                ProgressView()
+            } else {
+                Image(systemName: "doc.fill")
+            }
+        }
+        .disabled(visibleTracks.isEmpty || isExporting)
+        .accessibilityLabel("Export PDF")
+        .accessibilityHint("Creates and shares a PDF of \(visibleTracks.count) tracks from \(playlist.name)")
+    }
+
+    // MARK: - Actions
+
+    private func exportPDF(tracks: [Track]) {
+        guard !isExporting else { return }
+
+        isExporting = true
+        exportErrorMessage = nil
+
+        // Capture data before async work to avoid actor isolation issues
+        let capturedPlaylistName = playlist.name
+        let capturedTracks = tracks
+
+        Task {
+            do {
+                let url = try await Task.detached(priority: .userInitiated) {
+                    try PDFExportService.exportTracksPDF(
+                        title: capturedPlaylistName,
+                        subtitle: "\(capturedTracks.count) tracks",
+                        tracks: capturedTracks
+                    )
+                }.value
+
+                await MainActor.run {
+                    pdfURL = url
+                    showPreview = true
+                    isExporting = false
+                }
+            } catch {
+                await MainActor.run {
+                    exportErrorMessage = error.localizedDescription
+                    isExporting = false
+                }
+            }
+        }
+    }
+
+    private func copyTrackInfo(_ track: Track) {
+        let parts = [
+            track.title.trimmingCharacters(in: .whitespacesAndNewlines),
+            track.artist.trimmingCharacters(in: .whitespacesAndNewlines)
+        ].filter { !$0.isEmpty }
+
+        var text = parts.joined(separator: " - ")
+
+        let album = track.album.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !album.isEmpty {
+            text += " (\(album))"
+        }
+
+        #if os(iOS)
+        UIPasteboard.general.string = text
+        #elseif os(macOS)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        #endif
+
+        showCopiedToast = true
     }
 }

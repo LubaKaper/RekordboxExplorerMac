@@ -8,10 +8,27 @@
 import SwiftUI
 
 struct LibraryRootView: View {
-    let db: RekordboxDatabase
+    @Binding var database: RekordboxDatabase?
 
-    @State private var shareItem: ShareItem?
+    @State private var pdfURL: URL?
+    @State private var showShare = false
     @State private var exportErrorMessage: String?
+    @State private var isExporting = false
+
+    // MARK: - Computed Properties
+
+    private var db: RekordboxDatabase {
+        database ?? RekordboxDatabase(tracks: [], playlists: [])
+    }
+
+    private var showErrorAlert: Binding<Bool> {
+        Binding(
+            get: { exportErrorMessage != nil },
+            set: { if !$0 { exportErrorMessage = nil } }
+        )
+    }
+
+    // MARK: - Body
 
     var body: some View {
         List {
@@ -53,24 +70,65 @@ struct LibraryRootView: View {
         }
         .navigationTitle("Library")
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button {
-                    exportLibraryPDF()
+                    database = nil
                 } label: {
-                    Image(systemName: "square.and.arrow.up")
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.body.weight(.semibold))
+                        Text("Close")
+                    }
                 }
-                .disabled(db.tracks.isEmpty)
+                .accessibilityLabel("Close Library")
+                .accessibilityHint("Returns to the home screen")
+            }
+
+            ToolbarItem(placement: .topBarTrailing) {
+                exportButton
             }
         }
-        .sheet(item: $shareItem) { item in
-            ShareSheet(items: [item.url])
+        .sheet(isPresented: $showShare) {
+            if let url = pdfURL {
+                ShareSheet(items: [url])
+            }
         }
-        .alert("Export failed", isPresented: .constant(exportErrorMessage != nil)) {
-            Button("OK") { exportErrorMessage = nil }
+        .alert("Export Failed", isPresented: showErrorAlert) {
+            Button("Retry", role: .none) {
+                exportLibraryPDF()
+            }
+            Button("Cancel", role: .cancel) { }
         } message: {
-            Text(exportErrorMessage ?? "")
+            Text(exportErrorMessage ?? "An unknown error occurred")
+        }
+        .overlay {
+            if isExporting {
+                ProgressView("Exporting Library...")
+                    .padding()
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
         }
     }
+
+    // MARK: - View Components
+
+    private var exportButton: some View {
+        Button {
+            exportLibraryPDF()
+        } label: {
+            if isExporting {
+                ProgressView()
+            } else {
+                Image(systemName: "square.and.arrow.up")
+            }
+        }
+        .disabled(db.tracks.isEmpty || isExporting)
+        .accessibilityLabel("Export Library")
+        .accessibilityHint("Creates a PDF of the entire library")
+    }
+
+    // MARK: - Helpers
 
     /// Total tracks for a playlist; for folders, includes all descendants.
     private func totalTrackCount(for playlist: Playlist) -> Int {
@@ -81,29 +139,53 @@ struct LibraryRootView: View {
         }
     }
 
-    /// Step 2: Build top-level sections and export a sectioned PDF
+    /// Build top-level sections and export a sectioned PDF
     private func exportLibraryPDF() {
-        do {
-            let sections = buildTopLevelSections()
-            let total = sections.reduce(0) { $0 + $1.tracks.count }
+        guard !isExporting else { return }
 
-            let url = try PDFExportService.exportSectionedTracksPDF(
-                title: "Rekordbox Library",
-                subtitle: "\(total) tracks",
-                sections: sections
-            )
-            shareItem = ShareItem(url: url)
-        } catch {
-            exportErrorMessage = error.localizedDescription
+        isExporting = true
+        exportErrorMessage = nil
+
+        // Capture data before async work
+        let playlists = db.playlists
+        let tracks = db.tracks
+
+        Task {
+            do {
+                let sections = await Task.detached(priority: .userInitiated) {
+                    Self.buildTopLevelSections(playlists: playlists, tracks: tracks)
+                }.value
+
+                let total = sections.reduce(0) { $0 + $1.tracks.count }
+
+                let url = try await Task.detached(priority: .userInitiated) {
+                    try PDFExportService.exportSectionedTracksPDF(
+                        title: "Rekordbox Library",
+                        subtitle: "\(total) tracks",
+                        sections: sections
+                    )
+                }.value
+
+                await MainActor.run {
+                    pdfURL = url
+                    showShare = true
+                    isExporting = false
+                }
+            } catch {
+                await MainActor.run {
+                    exportErrorMessage = error.localizedDescription
+                    isExporting = false
+                }
+            }
         }
     }
 
     /// Sections = top-level playlists/folders on the left.
     /// - If it's a folder: section contains all tracks under it (all descendants).
     /// - If it's a playlist: section contains that playlist's tracks.
-    private func buildTopLevelSections() -> [(name: String, tracks: [PDFTrackRow])] {
+    nonisolated private static func buildTopLevelSections(playlists: [Playlist], tracks: [Track]) -> [(name: String, tracks: [PDFTrackRow])] {
         // fast lookup: track id -> Track
-        let map: [Int: Track] = Dictionary(uniqueKeysWithValues: db.tracks.map { ($0.id, $0) })
+        let map: [Int: Track] = Dictionary(uniqueKeysWithValues: tracks.map { ($0.id, $0) })
 
         func tracksForPlaylist(_ p: Playlist) -> [Track] {
             // preserve playlist order
@@ -139,7 +221,7 @@ struct LibraryRootView: View {
 
         var result: [(name: String, tracks: [PDFTrackRow])] = []
 
-        for p in db.playlists {
+        for p in playlists {
             if p.isFolder {
                 let tracks = tracksForFolder(p)
                 let rows = toRows(tracks)
@@ -153,9 +235,4 @@ struct LibraryRootView: View {
 
         return result
     }
-}
-
-private struct ShareItem: Identifiable {
-    let id = UUID()
-    let url: URL
 }

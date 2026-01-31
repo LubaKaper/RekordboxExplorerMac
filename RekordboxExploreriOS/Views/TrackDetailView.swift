@@ -11,6 +11,7 @@ struct TrackDetailView: View {
     let track: Track
 
     @State private var showCopiedToast = false
+    @AppStorage("fontSizeMultiplier") private var fontSizeMultiplier: Double = 1.0
 
     var body: some View {
         List {
@@ -20,11 +21,12 @@ struct TrackDetailView: View {
                     HStack(alignment: .top, spacing: 12) {
                         VStack(alignment: .leading, spacing: 6) {
                             Text(track.title)
-                                .font(.title3)
+                                .fontSizePreference(fontSizeMultiplier, baseSize: .title3)
                                 .fontWeight(.semibold)
                                 .lineLimit(3)
 
                             Text(track.artist.isEmpty ? "—" : track.artist)
+                                .fontSizePreference(fontSizeMultiplier, baseSize: .body)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
                         }
@@ -39,21 +41,10 @@ struct TrackDetailView: View {
                         }
                         .buttonStyle(.borderless)
                         .accessibilityLabel("Copy track info")
+                        .accessibilityHint("Copies track title, artist, and album to clipboard")
                     }
                 }
                 .padding(.vertical, 6)
-                .overlay(alignment: .bottom) {
-                    if showCopiedToast {
-                        Text("Copied")
-                            .font(.caption.weight(.semibold))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Capsule())
-                            .padding(.bottom, 6)
-                            .transition(.opacity)
-                    }
-                }
             }
 
             // Details (Album only appears here)
@@ -69,7 +60,7 @@ struct TrackDetailView: View {
         }
         .navigationTitle("Track")
         .navigationBarTitleDisplayMode(.inline)
-        .animation(.easeInOut(duration: 0.2), value: showCopiedToast)
+        .toast("Copied", isShowing: $showCopiedToast, duration: 1.2)
     }
 
     private func copySummary() {
@@ -85,22 +76,25 @@ struct TrackDetailView: View {
             text += " (\(album))"
         }
 
+        #if os(iOS)
         UIPasteboard.general.string = text
+        #elseif os(macOS)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        #endif
 
         showCopiedToast = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-            showCopiedToast = false
-        }
     }
 
     private func infoRow(_ label: String, _ value: String) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Text(label)
-                .font(.caption)
+                .fontSizePreference(fontSizeMultiplier, baseSize: .caption)
                 .foregroundStyle(.secondary)
                 .frame(width: 80, alignment: .leading)
 
             Text(value)
+                .fontSizePreference(fontSizeMultiplier, baseSize: .body)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .textSelection(.enabled)
         }
@@ -114,10 +108,17 @@ struct TrackDetailView: View {
     }
 
     private func formatDate(_ d: Date) -> String {
-        let df = DateFormatter()
-        df.locale = Locale(identifier: "en_US_POSIX")
-        df.dateStyle = .medium
-        df.timeStyle = .short
-        return df.string(from: d)
+        let calendar = Calendar.current
+        let now = Date()
+        
+        if calendar.isDateInToday(d) {
+            return "Today at " + d.formatted(date: .omitted, time: .shortened)
+        } else if calendar.isDateInYesterday(d) {
+            return "Yesterday at " + d.formatted(date: .omitted, time: .shortened)
+        } else if let days = calendar.dateComponents([.day], from: d, to: now).day, days < 7 {
+            return d.formatted(date: .omitted, time: .omitted) + " " + d.formatted(.dateTime.weekday(.wide).hour().minute())
+        } else {
+            return d.formatted(date: .abbreviated, time: .shortened)
+        }
     }
 }

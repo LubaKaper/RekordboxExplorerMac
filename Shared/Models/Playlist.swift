@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Playlist: Identifiable, Hashable {
+struct Playlist: Identifiable, Hashable, Sendable {
     let id: Int
     var name: String
     var parentId: Int?

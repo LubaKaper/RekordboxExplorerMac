@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct RekordboxDatabase {
+struct RekordboxDatabase: Sendable {
     var tracks: [Track]
     var playlists: [Playlist]
 }

@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8D1A74462F2C89CF00D557C3 /* README_IMPROVEMENTS.md in Resources */ = {isa = PBXBuildFile; fileRef = 8D1A742C2F2C89CF00D557C3 /* README_IMPROVEMENTS.md */; };
+		8D1A744D2F2C9B4600D557C3 /* AppPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D1A744C2F2C9B4600D557C3 /* AppPreferences.swift */; };
+		8D1A744E2F2C9B4600D557C3 /* AppPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D1A744C2F2C9B4600D557C3 /* AppPreferences.swift */; };
+		8D1A74602F2DA00000D557C3 /* TrackFilterHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D1A745F2F2DA00000D557C3 /* TrackFilterHelpers.swift */; };
+		8D1A74612F2DA00000D557C3 /* TrackFilterHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D1A745F2F2DA00000D557C3 /* TrackFilterHelpers.swift */; };
 		8D3C33D92F207A5500DAE047 /* BookmarkStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D3C33D82F207A5500DAE047 /* BookmarkStore.swift */; };
 		8D3C33DA2F207A5500DAE047 /* BookmarkStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D3C33D82F207A5500DAE047 /* BookmarkStore.swift */; };
 		8D3C33DD2F20862700DAE047 /* PDFExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D3C33DC2F20862700DAE047 /* PDFExportService.swift */; };
@@ -24,6 +29,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		8D1A742C2F2C89CF00D557C3 /* README_IMPROVEMENTS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README_IMPROVEMENTS.md; sourceTree = "<group>"; };
+		8D1A744C2F2C9B4600D557C3 /* AppPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferences.swift; sourceTree = "<group>"; };
+		8D1A745F2F2DA00000D557C3 /* TrackFilterHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackFilterHelpers.swift; sourceTree = "<group>"; };
 		8D3C33D82F207A5500DAE047 /* BookmarkStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkStore.swift; sourceTree = "<group>"; };
 		8D3C33DC2F20862700DAE047 /* PDFExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFExportService.swift; sourceTree = "<group>"; };
 		8D3C33E42F216E9700DAE047 /* SectionBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionBuilder.swift; sourceTree = "<group>"; };
@@ -66,6 +74,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8D1A74582F2D8DA500D557C3 /* DOCS */ = {
+			isa = PBXGroup;
+			children = (
+				8D1A742C2F2C89CF00D557C3 /* README_IMPROVEMENTS.md */,
+			);
+			path = DOCS;
+			sourceTree = "<group>";
+		};
 		8D3C33DB2F2085F400DAE047 /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -78,6 +94,7 @@
 		8DE2785B2F1C7FB400086117 = {
 			isa = PBXGroup;
 			children = (
+				8D1A74582F2D8DA500D557C3 /* DOCS */,
 				8DE2789D2F20192300086117 /* Shared */,
 				8DE278662F1C7FB400086117 /* RekordboxExplorerMac */,
 				8DE2788E2F2013E300086117 /* RekordboxExploreriOS */,
@@ -109,6 +126,8 @@
 			children = (
 				8DE278812F1C886300086117 /* PDBParser.swift */,
 				8D3C33D82F207A5500DAE047 /* BookmarkStore.swift */,
+				8D1A744C2F2C9B4600D557C3 /* AppPreferences.swift */,
+				8D1A745F2F2DA00000D557C3 /* TrackFilterHelpers.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -220,6 +239,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8D1A74462F2C89CF00D557C3 /* README_IMPROVEMENTS.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -232,11 +252,13 @@
 			files = (
 				8DE2787A2F1C871C00086117 /* RekordboxDatabase.swift in Sources */,
 				8D3C33DE2F20862700DAE047 /* PDFExportService.swift in Sources */,
+				8D1A744D2F2C9B4600D557C3 /* AppPreferences.swift in Sources */,
 				8D3C33D92F207A5500DAE047 /* BookmarkStore.swift in Sources */,
 				8D3C33E52F216E9700DAE047 /* SectionBuilder.swift in Sources */,
 				8DE278822F1C886300086117 /* PDBParser.swift in Sources */,
 				8DE278762F1C828300086117 /* Track.swift in Sources */,
 				8DE278782F1C86EA00086117 /* Playlist.swift in Sources */,
+				8D1A74602F2DA00000D557C3 /* TrackFilterHelpers.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -244,6 +266,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8D1A744E2F2C9B4600D557C3 /* AppPreferences.swift in Sources */,
 				8DE278982F20144200086117 /* PDBParser.swift in Sources */,
 				8D3C33E62F216E9700DAE047 /* SectionBuilder.swift in Sources */,
 				8DE2789A2F20145100086117 /* Track.swift in Sources */,
@@ -251,6 +274,7 @@
 				8DE2789B2F20146200086117 /* Playlist.swift in Sources */,
 				8DE2789C2F20146D00086117 /* RekordboxDatabase.swift in Sources */,
 				8D3C33DD2F20862700DAE047 /* PDFExportService.swift in Sources */,
+				8D1A74612F2DA00000D557C3 /* TrackFilterHelpers.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

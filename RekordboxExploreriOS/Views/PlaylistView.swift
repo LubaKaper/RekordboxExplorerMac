@@ -11,79 +11,123 @@ struct PlaylistView: View {
     let playlist: Playlist
     let db: RekordboxDatabase
 
-    @State private var previewItem: PreviewItem?
-    @State private var shareItem: ShareItem?
+    @State private var pdfURL: URL?
+    @State private var showPreview = false
+    @State private var showShare = false
     @State private var exportErrorMessage: String?
     @State private var isExportingPDF = false
     @State private var exportStatus: String = ""
 
+    // MARK: - Computed Properties
+
+    private var showErrorAlert: Binding<Bool> {
+        Binding(
+            get: { exportErrorMessage != nil },
+            set: { if !$0 { exportErrorMessage = nil } }
+        )
+    }
+
+    // MARK: - Body
+
     var body: some View {
         Group {
             if playlist.isFolder {
-                List(playlist.children) { child in
-                    NavigationLink {
-                        PlaylistView(playlist: child, db: db)
-                    } label: {
-                        Label {
-                            HStack {
-                                Text(child.name)
-                                Spacer()
-                                Text("\(totalTrackCount(for: child))")
-                                    .foregroundStyle(.secondary)
-                                    .monospacedDigit()
-                            }
-                        } icon: {
-                            Image(systemName: child.isFolder ? "folder" : "music.note.list")
-                        }
-                    }
-                }
-                .navigationTitle(playlist.name)
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            exportFolderPDF()
-                        } label: {
-                            if isExportingPDF {
-                                ProgressView()
-                            } else {
-                                Image(systemName: "doc.fill")
-                            }
-                        }
-                        .disabled(isExportingPDF || totalTrackCount(for: playlist) == 0)
-                    }
-                }
-                // Preview first
-                .sheet(item: $previewItem) { item in
-                    PreviewSheet(url: item.url) { url in
-                        shareItem = ShareItem(url: url)
-                    }
-                }
-                // Then Share
-                .sheet(item: $shareItem) { item in
-                    ShareSheet(items: [item.url])
-                }
-                .safeAreaInset(edge: .top) {
-                    if !exportStatus.isEmpty {
-                        Text(exportStatus)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal)
-                            .padding(.top, 4)
-                    }
-                }
-                .alert("Export failed", isPresented: .constant(exportErrorMessage != nil)) {
-                    Button("OK") { exportErrorMessage = nil }
-                } message: {
-                    Text(exportErrorMessage ?? "")
-                }
-
+                folderView
             } else {
                 PlaylistTracksView(playlist: playlist, db: db)
             }
         }
     }
 
-    // MARK: - Folder helpers
+    // MARK: - View Components
+
+    private var folderView: some View {
+        List(playlist.children) { child in
+            NavigationLink {
+                PlaylistView(playlist: child, db: db)
+            } label: {
+                Label {
+                    HStack {
+                        Text(child.name)
+                        Spacer()
+                        Text("\(totalTrackCount(for: child))")
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
+                } icon: {
+                    Image(systemName: child.isFolder ? "folder" : "music.note.list")
+                }
+            }
+        }
+        .navigationTitle(playlist.name)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                exportButton
+            }
+        }
+        .sheet(isPresented: $showPreview) {
+            if let url = pdfURL {
+                PDFPreviewSheet(url: url) { sharedURL in
+                    showPreview = false
+                    pdfURL = sharedURL
+                    showShare = true
+                }
+            }
+        }
+        .sheet(isPresented: $showShare) {
+            if let url = pdfURL {
+                ShareSheet(items: [url])
+            }
+        }
+        .safeAreaInset(edge: .top) {
+            if !exportStatus.isEmpty {
+                Text(exportStatus)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal)
+                    .padding(.top, 4)
+            }
+        }
+        .alert("Export Failed", isPresented: showErrorAlert) {
+            Button("Retry", role: .none) {
+                exportFolderPDF()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text(exportErrorMessage ?? "An unknown error occurred")
+        }
+        .overlay {
+            if isExportingPDF {
+                VStack(spacing: 8) {
+                    ProgressView()
+                    if !exportStatus.isEmpty {
+                        Text(exportStatus)
+                            .font(.caption)
+                    }
+                }
+                .padding()
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+        }
+    }
+
+    private var exportButton: some View {
+        Button {
+            exportFolderPDF()
+        } label: {
+            if isExportingPDF {
+                ProgressView()
+            } else {
+                Image(systemName: "doc.fill")
+            }
+        }
+        .disabled(isExportingPDF || totalTrackCount(for: playlist) == 0)
+        .accessibilityLabel("Export Folder PDF")
+        .accessibilityHint("Creates a PDF of all playlists in \(playlist.name)")
+    }
+
+    // MARK: - Folder Helpers
 
     private func totalTrackCount(for playlist: Playlist) -> Int {
         if playlist.isFolder {
@@ -100,7 +144,11 @@ struct PlaylistView: View {
 
         isExportingPDF = true
         exportErrorMessage = nil
-        exportStatus = "Preparing PDF…"
+        exportStatus = "Preparing PDF..."
+
+        // Capture data before async work to avoid actor isolation issues
+        let capturedPlaylist = playlist
+        let capturedDb = db
 
         Task {
             do {
@@ -108,10 +156,10 @@ struct PlaylistView: View {
                 let (pdfTitle, pdfSubtitle, sendableSections) =
                 await Task.detached(priority: .userInitiated) { () -> (String, String, [(name: String, tracks: [PDFTrackRow])]) in
 
-                    let sections = SectionBuilder.buildSectionsUnderFolder(playlist, db: db)
+                    let sections = SectionBuilder.buildSectionsUnderFolder(capturedPlaylist, db: capturedDb)
                     let total = sections.reduce(0) { $0 + $1.tracks.count }
 
-                    let title = playlist.name
+                    let title = capturedPlaylist.name
                     let subtitle = "\(total) tracks"
 
                     let mapped: [(name: String, tracks: [PDFTrackRow])] = sections.map { s in
@@ -132,7 +180,7 @@ struct PlaylistView: View {
                     return (title, subtitle, mapped)
                 }.value
 
-                await MainActor.run { exportStatus = "Rendering PDF…" }
+                await MainActor.run { exportStatus = "Rendering PDF..." }
 
                 // 2) Export PDF on MainActor (UIKit renderer)
                 let url = try await MainActor.run {
@@ -143,9 +191,10 @@ struct PlaylistView: View {
                     )
                 }
 
-                // 3) Show PREVIEW (not share)
+                // 3) Show PREVIEW
                 await MainActor.run {
-                    previewItem = PreviewItem(url: url)
+                    pdfURL = url
+                    showPreview = true
                     isExportingPDF = false
                     exportStatus = ""
                 }
@@ -160,45 +209,3 @@ struct PlaylistView: View {
         }
     }
 }
-
-// MARK: - Sheet items
-
-private struct PreviewItem: Identifiable {
-    let id = UUID()
-    let url: URL
-}
-
-private struct ShareItem: Identifiable {
-    let id = UUID()
-    let url: URL
-}
-
-// MARK: - Preview wrapper (dismiss preview, then share)
-
-private struct PreviewSheet: View {
-    let url: URL
-    let onShare: (URL) -> Void
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            PDFPreviewController(url: url)
-                .ignoresSafeArea()
-                .navigationTitle("PDF Preview")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            dismiss()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                                onShare(url)
-                            }
-                        } label: {
-                            Image(systemName: "square.and.arrow.up")
-                        }
-                    }
-                }
-        }
-    }
-}
-

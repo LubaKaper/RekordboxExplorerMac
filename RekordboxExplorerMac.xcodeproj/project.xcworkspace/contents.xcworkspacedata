@@ -4,4 +4,34 @@
    <FileRef
       location = "self:">
    </FileRef>
+   <FileRef
+      location = "group:MACOS_FUZZY_SEARCH.md">
+   </FileRef>
+   <FileRef
+      location = "group:SHARED_FOLDER_GUIDE.md">
+   </FileRef>
+   <FileRef
+      location = "group:AppPreferences.swift">
+   </FileRef>
+   <FileRef
+      location = "group:SettingsView.swift">
+   </FileRef>
+   <FileRef
+      location = "group:TrackRowView.swift">
+   </FileRef>
+   <FileRef
+      location = "group:MacSettingsView.swift">
+   </FileRef>
+   <FileRef
+      location = "group:PHASE1_COMPLETE.md">
+   </FileRef>
+   <FileRef
+      location = "group:PHASE1_QUICK_REFERENCE.md">
+   </FileRef>
+   <FileRef
+      location = "group:AppPreferences 2.swift">
+   </FileRef>
+   <FileRef
+      location = "group:FILE_ORGANIZATION_GUIDE.md">
+   </FileRef>
 </Workspace>

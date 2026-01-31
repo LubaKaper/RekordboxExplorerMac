@@ -25,6 +25,11 @@ struct MainView: View {
     
     @State private var selection: LibrarySelection = .home
     @State private var searchText: String = ""
+    @State private var showingSettings = false
+    
+    // Preferences
+    @AppStorage("colorSchemePreference") private var colorSchemePreference: AppPreferences.ColorSchemePreference = .dark
+    @AppStorage("fontSizeMultiplier") private var fontSizeMultiplier: Double = 1.0
     
     // Table sorting
     @State private var sortOrder: [KeyPathComparator<Track>] = [
@@ -42,6 +47,8 @@ struct MainView: View {
             detail
         }
         .navigationTitle("RekordboxExplorerMac")
+        .tint(colorSchemePreference.isColorful ? .cyan : nil)
+        .preferredColorScheme(colorSchemePreference.colorScheme)
         .toolbar {
             ToolbarItemGroup(placement: .navigation) {
                 Button {
@@ -78,6 +85,18 @@ struct MainView: View {
                 }
                 .disabled(db == nil)
             }
+            
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    showingSettings = true
+                } label: {
+                    Label("Settings", systemImage: "gearshape")
+                }
+                .help("Open Settings")
+            }
+        }
+        .sheet(isPresented: $showingSettings) {
+            MacSettingsView()
         }
     }
     
@@ -206,31 +225,35 @@ struct MainView: View {
             Table(filteredAndSortedTracks, sortOrder: $sortOrder) {
                 TableColumn("Title", value: \.title) { t in
                     Text(t.title)
+                        .fontSizePreference(fontSizeMultiplier, baseSize: .body)
                         .lineLimit(1)
                 }
                 TableColumn("Artist", value: \.artist) { t in
                     Text(t.artist)
+                        .fontSizePreference(fontSizeMultiplier, baseSize: .body)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
                 TableColumn("Album") { t in
                     Text(t.album.isEmpty ? "—" : t.album)
+                        .fontSizePreference(fontSizeMultiplier, baseSize: .body)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
                 TableColumn("Duration") { t in
                     Text(Formatters.duration(t.duration))
+                        .fontSizePreference(fontSizeMultiplier, baseSize: .body)
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
                 TableColumn("BPM") { t in
                     Text(String(format: "%.1f", t.bpm))
+                        .fontSizePreference(fontSizeMultiplier, baseSize: .body)
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
             }
             .tableStyle(.inset(alternatesRowBackgrounds: true))
-            // The Table header is pinned automatically (this satisfies your requirement).
         }
         .padding(16)
     }
@@ -319,15 +342,8 @@ struct MainView: View {
             base = db.tracks.filter { set.contains($0.id) }
         }
         
-        // search filter (title/artist/album)
-        let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        let filtered = q.isEmpty ? base : base.filter {
-            $0.title.lowercased().contains(q) ||
-            $0.artist.lowercased().contains(q) ||
-            $0.album.lowercased().contains(q) ||
-            $0.genre.lowercased().contains(q) ||
-            $0.key.lowercased().contains(q)
-        }
+        // search filter (fuzzy search across title/artist/album/genre/key)
+        let filtered = TrackFilterHelpers.filteredMac(base, searchText: searchText)
         
         // sort according to Table sortOrder
         return filtered.sorted(using: sortOrder)
